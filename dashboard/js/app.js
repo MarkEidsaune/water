@@ -6,6 +6,36 @@ const PARAM_LABELS = {
   temperature_c: "Water temperature, °C",
 };
 
+// Live conditions via the USGS OGC API (CORS-open, keyless in-browser)
+const OGC = "https://api.waterdata.usgs.gov/ogcapi/v0/collections";
+const LIVE_PARAMS = { "00060": "discharge_cfs", "00065": "gage_height_ft", "00010": "temperature_c" };
+const STALE_MS = 24 * 3600 * 1000; // ignore "latest" readings older than 24 h
+
+// Percentile grid — must match PCT_GRID in src/water/pipeline.py
+const PCT_GRID = [0, 5, 10, 25, 50, 75, 90, 95, 100];
+
+// Current flow vs. the gage's own trailing year:
+// dry amber → normal blue → high dark navy
+const flowColor = d3
+  .scaleLinear()
+  .domain([0, 25, 50, 90, 100])
+  .range(["#c08a3e", "#9db8a5", "#7fb2d6", "#1b6ca8", "#08306b"])
+  .clamp(true);
+const NO_DATA = "#999";
+
+// Piecewise-linear percentile of v against quantile values q (on PCT_GRID)
+function percentile(v, q) {
+  if (v <= q[0]) return 0;
+  for (let i = 1; i < q.length; i++) {
+    if (v <= q[i]) {
+      const span = q[i] - q[i - 1];
+      const frac = span > 0 ? (v - q[i - 1]) / span : 1;
+      return PCT_GRID[i - 1] + frac * (PCT_GRID[i] - PCT_GRID[i - 1]);
+    }
+  }
+  return 100;
+}
+
 const map = L.map("map", { zoomControl: true }).setView([40.2, -82.7], 8);
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
   attribution:
@@ -66,27 +96,107 @@ function selectMarker(marker) {
   if (selected) selected.getElement()?.classList.add("selected");
 }
 
-fetch("data/sites.json")
-  .then((r) => r.json())
-  .then((sites) => {
+// One statewide request for current discharge at every Ohio stream gage
+async function fetchLiveFlows() {
+  try {
+    const url = `${OGC}/latest-continuous/items?f=json&state_code=39&site_type_code=ST&parameter_code=00060&limit=10000`;
+    const d = await fetch(url).then((r) => r.json());
+    const now = Date.now();
+    const flows = new Map();
+    for (const f of d.features ?? []) {
+      const p = f.properties;
+      const t = Date.parse(p.time);
+      if (p.value == null || now - t > STALE_MS) continue;
+      flows.set(p.monitoring_location_id.replace("USGS-", ""), {
+        value: +p.value,
+        time: t,
+      });
+    }
+    return flows;
+  } catch {
+    return new Map(); // offline/API down → neutral markers
+  }
+}
+
+Promise.all([fetch("data/sites.json").then((r) => r.json()), fetchLiveFlows()])
+  .then(([sites, flows]) => {
+    let live = 0;
     for (const site of sites) {
+      const flow = flows.get(site.id);
+      let color = NO_DATA;
+      let pct = null;
+      if (flow && site.q) {
+        pct = percentile(flow.value, site.q);
+        color = flowColor(pct);
+        live++;
+      }
       const m = L.circleMarker([site.lat, site.lon], {
-        radius: 4,
+        radius: pct == null ? 3 : 4.5,
         className: "gage-marker",
+        color,
+        fillColor: color,
+        fillOpacity: pct == null ? 0.25 : 0.75,
+        weight: 1,
       }).addTo(map);
-      m.bindTooltip(site.name, { direction: "top", offset: [0, -4] });
+      const tip =
+        pct == null
+          ? site.name
+          : `${site.name} — ${Math.round(pct)}th pctile flow`;
+      m.bindTooltip(tip, { direction: "top", offset: [0, -4] });
       m.on("click", () => {
         selectMarker(m);
         showSite(site);
       });
     }
+    document.getElementById("legend").classList.toggle("hidden", live === 0);
   });
 
+// Current readings for one site, for the panel header
+async function fetchSiteLatest(siteId) {
+  try {
+    const url = `${OGC}/latest-continuous/items?f=json&monitoring_location_id=USGS-${siteId}&limit=50`;
+    const d = await fetch(url).then((r) => r.json());
+    const now = Date.now();
+    const out = [];
+    for (const f of d.features ?? []) {
+      const p = f.properties;
+      const name = LIVE_PARAMS[p.parameter_code];
+      const t = Date.parse(p.time);
+      if (!name || p.value == null || now - t > STALE_MS) continue;
+      out.push({ name, value: +p.value, time: t });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function renderNow(readings) {
+  const el = document.getElementById("now");
+  if (!readings.length) {
+    el.innerHTML = "";
+    return;
+  }
+  const asOf = new Date(Math.max(...readings.map((r) => r.time)));
+  const parts = readings
+    .map((r) => `${PARAM_LABELS[r.name]}: <strong>${r.value}</strong>`)
+    .join(" · ");
+  el.innerHTML = `${parts}<br/><span class="asof">as of ${asOf.toLocaleString([], {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  })}</span>`;
+}
+
 async function showSite(site) {
-  const series = await fetch(`data/series/${site.id}.json`).then((r) => r.json());
   document.getElementById("site-name").textContent = site.name;
   document.getElementById("site-meta").textContent =
     `USGS ${site.id} · ${site.lat.toFixed(3)}, ${(-site.lon).toFixed(3)} W`;
+  document.getElementById("now").innerHTML = "";
+
+  const [series, latest] = await Promise.all([
+    fetch(`data/series/${site.id}.json`).then((r) => r.json()),
+    fetchSiteLatest(site.id),
+  ]);
+  renderNow(latest);
 
   const charts = document.getElementById("charts");
   charts.innerHTML = "";

@@ -21,8 +21,17 @@
     <button id="close" aria-label="Close">×</button>
     <h2 id="site-name"></h2>
     <p id="site-meta"></p>
+    <p id="now"></p>
     <div id="charts"></div>
   </aside>
+
+  <div id="legend" class="hidden">
+    <span>Current flow vs. trailing year:</span>
+    <span class="swatch" style="background:#c08a3e"></span>low
+    <span class="swatch" style="background:#7fb2d6"></span>normal
+    <span class="swatch" style="background:#08306b"></span>high
+    <span class="swatch" style="background:#999;opacity:.4"></span>no data
+  </div>
 
   <script src="js/app.js"></script>
 </body>

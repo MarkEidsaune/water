@@ -26,6 +26,11 @@ ROOT = Path(__file__).resolve().parents[2]
 DASHBOARD_DATA = ROOT / "dashboard" / "data"
 RAW_DIR = ROOT / "data" / "raw"
 
+# Percentile grid for per-gage discharge climatology; the dashboard
+# interpolates the current reading against these to color markers.
+# Must match PCT_GRID in dashboard/js/app.js.
+PCT_GRID = [0, 5, 10, 25, 50, 75, 90, 95, 100]
+
 
 def cache_raw(daily: dict, name: str) -> None:
     """Flatten the nested daily dict to a tidy parquet for later modeling."""
@@ -63,18 +68,28 @@ def build(days: int = 365) -> None:
         series = {"date": dates}
         for p in params:
             series[p] = [days_map[d].get(p) for d in dates]
+
+        q = None
+        flows = sorted(
+            v["discharge_cfs"] for v in days_map.values()
+            if "discharge_cfs" in v
+        )
+        if len(flows) >= 60:  # need a real distribution, not a stub
+            s = pd.Series(flows)
+            q = [round(float(s.quantile(p / 100)), 2) for p in PCT_GRID]
         (DASHBOARD_DATA / "series" / f"{site['site_no']}.json").write_text(
             json.dumps(series)
         )
-        site_records.append(
-            {
-                "id": site["site_no"],
-                "name": site["name"],
-                "lat": round(site["lat"], 5),
-                "lon": round(site["lon"], 5),
-                "params": params,
-            }
-        )
+        rec = {
+            "id": site["site_no"],
+            "name": site["name"],
+            "lat": round(site["lat"], 5),
+            "lon": round(site["lon"], 5),
+            "params": params,
+        }
+        if q:
+            rec["q"] = q
+        site_records.append(rec)
 
     (DASHBOARD_DATA / "sites.json").write_text(json.dumps(site_records))
     print(f"Wrote {len(site_records)} sites with data → {DASHBOARD_DATA}")
