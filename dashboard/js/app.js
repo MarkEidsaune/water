@@ -12,6 +12,36 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png
   maxZoom: 18,
 }).addTo(map);
 
+// Hydrography overlays: water is the only colored geography, drawn beneath
+// the gage markers. Panes keep z-order explicit (lakes < rivers < markers).
+map.createPane("lakes").style.zIndex = 390;
+map.createPane("rivers").style.zIndex = 395;
+
+fetch("geo/lakes.json")
+  .then((r) => r.json())
+  .then((geo) =>
+    L.geoJSON(geo, {
+      pane: "lakes",
+      interactive: false,
+      style: { color: "#c3dbe8", weight: 1, fillColor: "#d7e8f2", fillOpacity: 1 },
+    }).addTo(map)
+  );
+
+fetch("geo/rivers.json")
+  .then((r) => r.json())
+  .then((geo) =>
+    L.geoJSON(geo, {
+      pane: "rivers",
+      interactive: false,
+      style: (f) => ({
+        color: "#a3c6dd",
+        // Natural Earth strokeweig ranges ~0.1–1.2; map to 1–3 px
+        weight: 1 + 1.7 * (f.properties.strokeweig ?? 0.5),
+        opacity: 0.9,
+      }),
+    }).addTo(map)
+  );
+
 const panel = document.getElementById("panel");
 document.getElementById("close").addEventListener("click", () => {
   panel.classList.add("hidden");
