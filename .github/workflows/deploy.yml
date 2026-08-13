@@ -1,0 +1,44 @@
+name: deploy
+
+on:
+  schedule:
+    - cron: "17 10 * * *" # 10:17 UTC ≈ 6:17am ET; odd minute avoids congestion
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false # never kill a deploy mid-flight
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Fetch USGS data and build dashboard
+        run: uv run python -m water.pipeline --days 365
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

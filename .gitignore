@@ -1,6 +1,7 @@
 # Data (regenerate with the pipeline)
 data/raw/
 data/processed/
+dashboard/data/
 
 # Python
 __pycache__/
