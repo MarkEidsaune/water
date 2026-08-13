@@ -51,6 +51,10 @@ def build(days: int = 365) -> None:
     sites = api.get_ohio_sites()
     print(f"  {len(sites)} active stream gages")
 
+    print("Fetching gage cameras…")
+    cameras = api.get_ohio_cameras()
+    print(f"  {len(cameras)} cameras")
+
     print(f"Fetching daily values since {start}…")
     daily = api.get_ohio_daily(start)
     cache_raw(daily, f"ohio_dv_{start}_{date.today().isoformat()}")
@@ -89,6 +93,8 @@ def build(days: int = 365) -> None:
         }
         if q:
             rec["q"] = q
+        if site["site_no"] in cameras:
+            rec["cam"] = cameras[site["site_no"]]
         site_records.append(rec)
 
     (DASHBOARD_DATA / "sites.json").write_text(json.dumps(site_records))

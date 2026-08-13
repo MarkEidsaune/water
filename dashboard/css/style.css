@@ -106,6 +106,18 @@ html, body {
   font-family: inherit;
 }
 
+#camera { margin: 0 0 1.2rem; }
+#camera img {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.2rem;
+}
+#camera .asof {
+  font-size: 0.75rem;
+  color: #777;
+  font-style: italic;
+}
+
 .chart { margin-bottom: 1.4rem; }
 .chart h3 {
   margin: 0 0 0.1rem;

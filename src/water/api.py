@@ -15,6 +15,7 @@ from typing import Iterator
 import requests
 
 BASE = "https://api.waterdata.usgs.gov/ogcapi/v0"
+NIMS = "https://api.waterdata.usgs.gov/nims/v0"
 PAGE_LIMIT = 10_000
 TIMEOUT = 180
 
@@ -74,6 +75,25 @@ def get_ohio_sites() -> list[dict]:
             }
         )
     return sites
+
+
+def get_ohio_cameras() -> dict[str, str]:
+    """Ohio gage cameras (NIMS): {site_no: camera_id}.
+
+    Image URLs are constructed client-side from camera metadata; here we
+    only need to know which sites have cameras.
+    """
+    resp = _session().get(
+        f"{NIMS}/cameras",
+        params={"returnFields": "camId,nwisId,stateAbrv,hideCam"},
+        timeout=TIMEOUT,
+    )
+    resp.raise_for_status()
+    return {
+        c["nwisId"]: c["camId"]
+        for c in resp.json()
+        if c.get("stateAbrv") == "OH" and c.get("nwisId") and not c.get("hideCam")
+    }
 
 
 def get_ohio_daily(start_date: str, end_date: str | None = None) -> dict:

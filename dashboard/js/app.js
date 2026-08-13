@@ -8,6 +8,8 @@ const PARAM_LABELS = {
 
 // Live conditions via the USGS OGC API (CORS-open, keyless in-browser)
 const OGC = "https://api.waterdata.usgs.gov/ogcapi/v0/collections";
+const NIMS = "https://api.waterdata.usgs.gov/nims/v0";
+const NIMS_IMG = "https://usgs-nims-images.s3.amazonaws.com";
 const LIVE_PARAMS = { "00060": "discharge_cfs", "00065": "gage_height_ft", "00010": "temperature_c" };
 const STALE_MS = 24 * 3600 * 1000; // ignore "latest" readings older than 24 h
 
@@ -138,10 +140,11 @@ Promise.all([fetch("data/sites.json").then((r) => r.json()), fetchLiveFlows()])
         fillOpacity: pct == null ? 0.25 : 0.75,
         weight: 1,
       }).addTo(map);
-      const tip =
+      let tip =
         pct == null
           ? site.name
           : `${site.name} — ${Math.round(pct)}th pctile flow`;
+      if (site.cam) tip += " · camera";
       m.bindTooltip(tip, { direction: "top", offset: [0, -4] });
       m.on("click", () => {
         selectMarker(m);
@@ -150,6 +153,37 @@ Promise.all([fetch("data/sites.json").then((r) => r.json()), fetchLiveFlows()])
     }
     document.getElementById("legend").classList.toggle("hidden", live === 0);
   });
+
+// Latest camera image: fetch fresh metadata so newestImageDT is current,
+// then construct the S3 URL from the NIMS filename convention.
+async function fetchCameraImage(camId) {
+  try {
+    const cams = await fetch(`${NIMS}/cameras?camId=${camId}`).then((r) => r.json());
+    const dt = cams?.[0]?.newestImageDT;
+    if (!dt) return null;
+    const stamp = dt.replace(/\.\d+Z$/, "Z").replaceAll(":", "-");
+    return {
+      url: `${NIMS_IMG}/720/${camId}/${camId}___${stamp}.jpg`,
+      time: new Date(dt),
+      hivis: `https://apps.usgs.gov/hivis/camera/${camId}`,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function renderCamera(img) {
+  const el = document.getElementById("camera");
+  el.innerHTML = "";
+  if (!img) return;
+  const when = img.time.toLocaleString([], {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
+  el.innerHTML =
+    `<a href="${img.hivis}" target="_blank" rel="noopener">` +
+    `<img src="${img.url}" alt="Latest gage camera image"/></a>` +
+    `<span class="asof">camera · ${when} · <a href="${img.hivis}" target="_blank" rel="noopener">timelapse</a></span>`;
+}
 
 // Current readings for one site, for the panel header
 async function fetchSiteLatest(siteId) {
@@ -191,12 +225,15 @@ async function showSite(site) {
   document.getElementById("site-meta").textContent =
     `USGS ${site.id} · ${site.lat.toFixed(3)}, ${(-site.lon).toFixed(3)} W`;
   document.getElementById("now").innerHTML = "";
+  document.getElementById("camera").innerHTML = "";
 
-  const [series, latest] = await Promise.all([
+  const [series, latest, camImg] = await Promise.all([
     fetch(`data/series/${site.id}.json`).then((r) => r.json()),
     fetchSiteLatest(site.id),
+    site.cam ? fetchCameraImage(site.cam) : Promise.resolve(null),
   ]);
   renderNow(latest);
+  renderCamera(camImg);
 
   const charts = document.getElementById("charts");
   charts.innerHTML = "";
