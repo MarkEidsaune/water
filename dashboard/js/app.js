@@ -8,7 +8,8 @@ const PARAM_LABELS = {
 
 const map = L.map("map", { zoomControl: true }).setView([40.2, -82.7], 8);
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
-  attribution: "© OpenStreetMap, © CARTO · Data: USGS NWIS",
+  attribution:
+    '© OpenStreetMap, © CARTO · Data: USGS NWIS · Hydrography: <a href="https://doi.org/10.3133/sir20255031">USGS NHDPlus</a>, Natural Earth',
   maxZoom: 18,
 }).addTo(map);
 
@@ -17,15 +18,24 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png
 map.createPane("lakes").style.zIndex = 390;
 map.createPane("rivers").style.zIndex = 395;
 
-fetch("geo/lakes.json")
-  .then((r) => r.json())
-  .then((geo) =>
-    L.geoJSON(geo, {
-      pane: "lakes",
-      interactive: false,
-      style: { color: "#c3dbe8", weight: 1, fillColor: "#d7e8f2", fillOpacity: 1 },
-    }).addTo(map)
-  );
+const LAKE_STYLE = {
+  color: "#c3dbe8",
+  weight: 1,
+  fillColor: "#d7e8f2",
+  fillOpacity: 1,
+};
+
+for (const src of ["geo/lakes.json", "geo/lakes-inland.json"]) {
+  fetch(src)
+    .then((r) => r.json())
+    .then((geo) =>
+      L.geoJSON(geo, {
+        pane: "lakes",
+        interactive: false,
+        style: LAKE_STYLE,
+      }).addTo(map)
+    );
+}
 
 fetch("geo/rivers.json")
   .then((r) => r.json())
@@ -35,8 +45,9 @@ fetch("geo/rivers.json")
       interactive: false,
       style: (f) => ({
         color: "#a3c6dd",
-        // Natural Earth strokeweig ranges ~0.1–1.2; map to 1–3 px
-        weight: 1 + 1.7 * (f.properties.strokeweig ?? 0.5),
+        // Weight by total river length (km) as a proxy for size:
+        // ~1px for short rivers up to ~3px for the Ohio (799 km)
+        weight: Math.min(3, 0.8 + Math.sqrt(f.properties.km ?? 50) / 12),
         opacity: 0.9,
       }),
     }).addTo(map)
