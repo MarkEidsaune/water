@@ -1,0 +1,13 @@
+# Data (regenerate with the pipeline)
+data/raw/
+data/processed/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

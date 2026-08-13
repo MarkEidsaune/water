@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Ohio Water</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="map"></div>
+
+  <header id="masthead">
+    <h1>Ohio Water</h1>
+    <p>Daily conditions at USGS stream gages · trailing year</p>
+  </header>
+
+  <aside id="panel" class="hidden">
+    <button id="close" aria-label="Close">×</button>
+    <h2 id="site-name"></h2>
+    <p id="site-meta"></p>
+    <div id="charts"></div>
+  </aside>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

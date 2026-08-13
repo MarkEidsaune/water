@@ -1,0 +1,117 @@
+/* Ohio Water — Tufte-inspired: maximize data-ink, minimize chrome. */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: Palatino, "Palatino Linotype", Georgia, serif;
+  color: #111;
+  background: #fffff8;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  background: #fffff8;
+}
+
+/* Mute the basemap so gage data is the foreground */
+.leaflet-tile-pane {
+  filter: grayscale(1) brightness(1.05) contrast(0.9);
+}
+
+#masthead {
+  position: absolute;
+  top: 1.25rem;
+  left: 3.5rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+#masthead h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 400;
+  font-style: italic;
+}
+#masthead p {
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+#panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24rem;
+  max-width: 90vw;
+  z-index: 1000;
+  background: #fffff8;
+  border-left: 1px solid #ddd;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+#panel.hidden { display: none; }
+
+#panel h2 {
+  margin: 0 1.5rem 0.15rem 0;
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+#site-meta {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+#close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.8rem;
+  border: none;
+  background: none;
+  font-size: 1.3rem;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.chart { margin-bottom: 1.4rem; }
+.chart h3 {
+  margin: 0 0 0.1rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  font-style: italic;
+  color: #333;
+}
+.chart .latest {
+  float: right;
+  font-style: normal;
+  color: #111;
+}
+.chart svg { display: block; }
+
+.spark {
+  fill: none;
+  stroke: #1b6ca8;
+  stroke-width: 1;
+}
+.spark-axis text {
+  font-family: inherit;
+  font-size: 0.65rem;
+  fill: #777;
+}
+.spark-axis line, .spark-axis path { stroke: #ccc; }
+
+.gage-marker {
+  stroke: #1b6ca8;
+  stroke-width: 1;
+  fill: #1b6ca8;
+  fill-opacity: 0.35;
+}
+.gage-marker.selected {
+  fill-opacity: 0.9;
+}
+
+.leaflet-container { font-family: inherit; }

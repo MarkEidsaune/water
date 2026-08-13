@@ -1,0 +1,26 @@
+[project]
+name = "water"
+version = "0.1.0"
+description = "USGS water data for Ohio fisheries: ingestion, dashboard, and predictive models"
+readme = "README.md"
+authors = [
+    { name = "markeidsaune", email = "markeidsaune@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "dataretrieval>=1.2.0",
+    "pandas>=3.0.5",
+    "pyarrow>=25.0.1",
+    "requests>=2.34.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+    "matplotlib>=3.11.1",
+    "scikit-learn>=1.9.0",
+]
