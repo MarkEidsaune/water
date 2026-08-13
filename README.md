@@ -6,7 +6,7 @@ predictive modeling experiments.
 ## Layout
 
 ```
-src/water/       Ingestion library (USGS NWIS via dataretrieval)
+src/water/       Ingestion library (USGS Water Data OGC API)
 dashboard/       Static Leaflet + D3 dashboard (Tufte-inspired)
 notebooks/       Modeling experiments
 reports/         Write-ups (Tufte CSS articles)
@@ -42,8 +42,11 @@ year.
 
 ## Data sources
 
-- **Gage observations:** USGS National Water Information System (NWIS),
-  retrieved via [dataretrieval](https://github.com/DOI-USGS/dataretrieval-python).
+- **Gage observations:** [USGS Water Data OGC API](https://api.waterdata.usgs.gov/docs/)
+  (`monitoring-locations` and `daily` collections). Works without a key; set
+  the `USGS_API_KEY` environment variable (locally or as a GitHub Actions
+  secret) for higher rate limits — get one at
+  https://api.waterdata.usgs.gov/signup/.
 - **Hydrography (rivers and inland lakes):** National Hydrography Dataset Plus
   (NHDPlus), queried from the NHDPlus V2 snapshot hosted by EPA WATERS
   GeoServices:

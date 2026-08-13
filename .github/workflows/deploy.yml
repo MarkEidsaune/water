@@ -28,6 +28,8 @@ jobs:
       - run: uv sync --locked
       - name: Fetch USGS data and build dashboard
         run: uv run python -m water.pipeline --days 365
+        env:
+          USGS_API_KEY: ${{ secrets.USGS_API_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dashboard/

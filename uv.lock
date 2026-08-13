@@ -473,20 +473,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dataretrieval"
-version = "1.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "httpx" },
-    { name = "pandas" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/29/1d/4aac06c1664d1a595dfdb3ec94b32c2147ec2e2806bbf15b17b58a448a7e/dataretrieval-1.2.0.tar.gz", hash = "sha256:30c720a71adcd632a61690ed1634a5e3a9fc00c5737f490e538d1995b461c791", size = 4004138, upload-time = "2026-06-24T21:25:23.247Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/f2/2f81557ef90966ab983fe2c38ccd59cc1723c93214fc86436bf07239ae4a/dataretrieval-1.2.0-py3-none-any.whl", hash = "sha256:71940a1d889a9c39637d8ef0efd68ebaf542500edf6d959d935852148a570be3", size = 164840, upload-time = "2026-06-24T21:25:21.902Z" },
-]
-
-[[package]]
 name = "debugpy"
 version = "1.8.21"
 source = { registry = "https://pypi.org/simple" }
@@ -2249,7 +2235,6 @@ name = "water"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "dataretrieval" },
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "requests" },
@@ -2265,7 +2250,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dataretrieval", specifier = ">=1.2.0" },
     { name = "pandas", specifier = ">=3.0.5" },
     { name = "pyarrow", specifier = ">=25.0.1" },
     { name = "requests", specifier = ">=2.34.2" },

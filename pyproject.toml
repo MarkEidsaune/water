@@ -8,7 +8,6 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "dataretrieval>=1.2.0",
     "pandas>=3.0.5",
     "pyarrow>=25.0.1",
     "requests>=2.34.2",
