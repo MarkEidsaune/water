@@ -284,6 +284,53 @@ function sparkline(title, dates, values, width = 320, height = 60) {
     .attr("class", "spark")
     .attr("d", d3.line().defined(([, v]) => v != null).x(([d]) => x(d)).y(([, v]) => y(v)));
 
+  // Hover: crosshair + dot + tooltip
+  const bisect = d3.bisector((p) => p[0]).center;
+
+  const vline = svg.append("line")
+    .attr("class", "spark-crosshair")
+    .attr("y1", m.top).attr("y2", height - m.bottom)
+    .attr("visibility", "hidden");
+
+  const dot = svg.append("circle")
+    .attr("class", "spark-dot")
+    .attr("r", 3)
+    .attr("visibility", "hidden");
+
+  const TW = 70, TH = 28;
+  const tip = svg.append("g").attr("class", "spark-tip").attr("visibility", "hidden");
+  tip.append("rect").attr("width", TW).attr("height", TH).attr("rx", 2);
+  const tipDate = tip.append("text").attr("class", "spark-tip-date").attr("x", 5).attr("y", 10);
+  const tipVal = tip.append("text").attr("class", "spark-tip-val").attr("x", 5).attr("y", 22);
+
+  svg.append("rect")
+    .attr("class", "spark-overlay")
+    .attr("x", m.left).attr("y", m.top)
+    .attr("width", width - m.left - m.right)
+    .attr("height", height - m.top - m.bottom)
+    .on("pointermove", (event) => {
+      const [mx] = d3.pointer(event);
+      const i = Math.min(bisect(pts, x.invert(mx)), pts.length - 1);
+      const [date, val] = pts[i];
+      const cx = x(date);
+      const cy = y(val);
+
+      vline.attr("x1", cx).attr("x2", cx).attr("visibility", "visible");
+      dot.attr("cx", cx).attr("cy", cy).attr("visibility", "visible");
+
+      tipDate.text(date.toLocaleDateString([], { month: "short", day: "numeric" }));
+      tipVal.text(d3.format(".4~g")(val));
+
+      const tx = cx + 8 + TW > width - m.right ? cx - TW - 8 : cx + 8;
+      const ty = Math.min(Math.max(cy - TH / 2, m.top), height - m.bottom - TH);
+      tip.attr("transform", `translate(${tx},${ty})`).attr("visibility", "visible");
+    })
+    .on("pointerleave", () => {
+      vline.attr("visibility", "hidden");
+      dot.attr("visibility", "hidden");
+      tip.attr("visibility", "hidden");
+    });
+
   div.appendChild(svg.node());
   return div;
 }

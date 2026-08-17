@@ -145,6 +145,35 @@ html, body {
 }
 .spark-axis line, .spark-axis path { stroke: #ccc; }
 
+.spark-crosshair {
+  stroke: #bbb;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  pointer-events: none;
+}
+.spark-dot {
+  fill: #1b6ca8;
+  stroke: #fffff8;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.spark-overlay {
+  fill: none;
+  pointer-events: all;
+  cursor: crosshair;
+}
+.spark-tip rect {
+  fill: #fffff8;
+  stroke: #ccc;
+  stroke-width: 1;
+}
+.spark-tip text {
+  font-family: Palatino, "Palatino Linotype", Georgia, serif;
+  font-size: 0.65rem;
+}
+.spark-tip-date { fill: #777; font-style: italic; }
+.spark-tip-val  { fill: #111; }
+
 /* Marker colors are set per-site in JS (live flow percentile);
    CSS handles only the selection affordance. */
 .gage-marker.selected {
